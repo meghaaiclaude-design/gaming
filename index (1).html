@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL FORGE — Arcade Games Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14101c;
+    --bg-2: #1d1728;
+    --card: #241c33;
+    --line: #3a2f4d;
+    --text: #f3eef7;
+    --muted: #a99cc0;
+    --magenta: #ff2e88;
+    --cyan: #2de2e6;
+    --amber: #ffb703;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Mono', monospace;
+    line-height:1.6;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* CRT scanline + flicker overlay — signature element */
+  .crt-overlay{
+    pointer-events:none;
+    position:fixed;
+    inset:0;
+    z-index:50;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.035) 0px,
+      rgba(255,255,255,0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+    animation:flicker 6s infinite;
+  }
+  @keyframes flicker{
+    0%,100%{ opacity:0.9; }
+    92%{ opacity:0.9; }
+    93%{ opacity:0.55; }
+    94%{ opacity:0.9; }
+    97%{ opacity:0.7; }
+    98%{ opacity:0.9; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .crt-overlay{ animation:none; }
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  a{ color:inherit; }
+
+  .pixel{
+    font-family:'Press Start 2P', monospace;
+    letter-spacing:0.5px;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:24px 48px;
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    background:rgba(20,16,28,0.85);
+    backdrop-filter:blur(6px);
+    z-index:10;
+  }
+  .logo{
+    font-size:14px;
+    color:var(--cyan);
+    text-shadow:2px 2px 0 var(--magenta);
+  }
+  nav ul{
+    list-style:none;
+    display:flex;
+    gap:32px;
+    margin:0;
+    padding:0;
+  }
+  nav a{
+    text-decoration:none;
+    font-size:13px;
+    color:var(--muted);
+    transition:color 0.2s ease;
+    position:relative;
+  }
+  nav a:hover, nav a:focus-visible{
+    color:var(--amber);
+    outline:none;
+  }
+  nav a:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:4px;
+  }
+
+  /* HERO — arcade marquee */
+  .hero{
+    position:relative;
+    padding:120px 48px 140px;
+    text-align:center;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,46,136,0.16), transparent 55%),
+      radial-gradient(circle at 20% 80%, rgba(45,226,230,0.10), transparent 45%);
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    display:inline-block;
+    font-size:11px;
+    color:var(--amber);
+    border:1px solid var(--amber);
+    padding:6px 14px;
+    border-radius:2px;
+    margin-bottom:28px;
+    letter-spacing:1px;
+  }
+  .hero h1{
+    font-size:clamp(32px, 6vw, 64px);
+    margin:0 0 20px;
+    color:#fff;
+    text-shadow:
+      3px 3px 0 var(--magenta),
+      6px 6px 0 rgba(45,226,230,0.5);
+    line-height:1.3;
+  }
+  .hero p{
+    max-width:520px;
+    margin:0 auto 40px;
+    color:var(--muted);
+    font-size:15px;
+  }
+  .insert-coin{
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    background:var(--magenta);
+    color:#fff;
+    border:none;
+    padding:18px 32px;
+    cursor:pointer;
+    border-radius:2px;
+    box-shadow:0 0 0 3px var(--bg), 0 0 0 5px var(--magenta);
+    animation:pulse 2s infinite;
+  }
+  .insert-coin:hover, .insert-coin:focus-visible{
+    background:var(--amber);
+    box-shadow:0 0 0 3px var(--bg), 0 0 0 5px var(--amber);
+  }
+  @keyframes pulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.04); }
+  }
+
+  /* Ticker */
+  .ticker-wrap{
+    border-bottom:1px solid var(--line);
+    background:var(--bg-2);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:12px 0;
+  }
+  .ticker{
+    display:inline-block;
+    padding-left:100%;
+    animation:scroll 22s linear infinite;
+    font-size:12px;
+    color:var(--cyan);
+  }
+  .ticker span{ margin-right:60px; }
+  @keyframes scroll{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-100%); }
+  }
+
+  section{ padding:100px 48px; max-width:1180px; margin:0 auto; }
+  .section-head{ margin-bottom:56px; }
+  .section-head .num{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:var(--magenta);
+    display:block;
+    margin-bottom:12px;
+  }
+  .section-head h2{
+    font-size:clamp(24px,4vw,34px);
+    margin:0;
+    color:#fff;
+  }
+
+  /* Game cards */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:28px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+    transition:transform 0.25s ease, border-color 0.25s ease;
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    border-color:var(--cyan);
+  }
+  .card-art{
+    height:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    position:relative;
+  }
+  .card-art::after{
+    content:'';
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(45deg, rgba(0,0,0,0.08) 0 10px, transparent 10px 20px);
+  }
+  .art-1{ background:linear-gradient(135deg,#ff2e88,#7a1e5a); }
+  .art-2{ background:linear-gradient(135deg,#2de2e6,#1a5c66); }
+  .art-3{ background:linear-gradient(135deg,#ffb703,#a6640a); }
+  .art-4{ background:linear-gradient(135deg,#8a5cf5,#3d2470); }
+  .card-body{ padding:20px; }
+  .card-body h3{ margin:0 0 6px; font-size:16px; color:#fff; }
+  .card-body p{ margin:0 0 14px; font-size:13px; color:var(--muted); }
+  .tags{ display:flex; gap:8px; flex-wrap:wrap; }
+  .tag{
+    font-size:10px;
+    padding:4px 8px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    color:var(--muted);
+  }
+
+  /* Stats */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
+    gap:24px;
+    text-align:center;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:48px 24px;
+  }
+  .stat .value{
+    font-family:'Press Start 2P', monospace;
+    font-size:28px;
+    color:var(--cyan);
+    display:block;
+    margin-bottom:10px;
+  }
+  .stat .label{ font-size:12px; color:var(--muted); }
+
+  /* Leaderboard */
+  table{ width:100%; border-collapse:collapse; }
+  th,td{ text-align:left; padding:14px 16px; font-size:13px; }
+  thead th{ color:var(--amber); border-bottom:1px solid var(--line); font-size:12px; }
+  tbody tr{ border-bottom:1px solid var(--line); }
+  tbody tr:hover{ background:var(--bg-2); }
+  .rank{ color:var(--magenta); font-weight:bold; }
+
+  /* CTA footer */
+  footer{
+    border-top:1px solid var(--line);
+    padding:64px 48px 40px;
+    text-align:center;
+  }
+  footer h2{ font-size:22px; margin-bottom:16px; color:#fff; }
+  footer p{ color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .foot-links{
+    display:flex; justify-content:center; gap:28px;
+    margin-bottom:32px; flex-wrap:wrap;
+  }
+  .foot-links a{ font-size:12px; color:var(--muted); text-decoration:none; }
+  .foot-links a:hover{ color:var(--cyan); }
+  .fine-print{ font-size:11px; color:#5b5170; }
+
+  @media (max-width:640px){
+    header{ padding:18px 20px; flex-direction:column; gap:16px; }
+    nav ul{ gap:18px; flex-wrap:wrap; justify-content:center; }
+    .hero{ padding:80px 20px 100px; }
+    section{ padding:64px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay" aria-hidden="true"></div>
+
+<header>
+  <div class="logo pixel">PIXEL FORGE</div>
+  <nav>
+    <ul>
+      <li><a href="#games">Games</a></li>
+      <li><a href="#stats">Stats</a></li>
+      <li><a href="#leaderboard">Leaderboard</a></li>
+      <li><a href="#join">Join</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="hero" style="padding-bottom:0; border-bottom:none;">
+  <span class="eyebrow pixel">FREE PLAY // NO QUARTERS NEEDED</span>
+  <h1 class="pixel">LEVEL UP<br>YOUR ARCADE</h1>
+  <p>A hub for the games people actually stay up too late playing. Four cabinets, one high-score list, zero microtransactions.</p>
+  <button class="insert-coin" onclick="sendPrompt('Tell me more about Pixel Forge and how I can playtest a game')">INSERT COIN ▸</button>
+</section>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>⚡ NEON DRIFT now supports 4-player split-screen</span>
+    <span>🏆 GRID_ZERO weekly tournament starts Friday</span>
+    <span>🕹️ VOID RUNNERS patch 2.3 fixes the boss rush glitch</span>
+    <span>💾 New cabinet added: SCRAP KING</span>
+    <span>⚡ NEON DRIFT now supports 4-player split-screen</span>
+  </div>
+</div>
+
+<section id="games">
+  <div class="section-head">
+    <span class="num pixel">CABINET_01–04</span>
+    <h2>Pick your game</h2>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-art art-1">🏎️</div>
+      <div class="card-body">
+        <h3>NEON DRIFT</h3>
+        <p>Arcade racer built for reckless drifting and worse decisions.</p>
+        <div class="tags"><span class="tag">Racing</span><span class="tag">4-Player</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art art-2">👾</div>
+      <div class="card-body">
+        <h3>GRID_ZERO</h3>
+        <p>Twin-stick shooter set inside a collapsing digital grid.</p>
+        <div class="tags"><span class="tag">Shooter</span><span class="tag">Co-op</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art art-3">🗡️</div>
+      <div class="card-body">
+        <h3>VOID RUNNERS</h3>
+        <p>Roguelike dungeon crawl where every death teaches the next run.</p>
+        <div class="tags"><span class="tag">Roguelike</span><span class="tag">Solo</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art art-4">⚙️</div>
+      <div class="card-body">
+        <h3>SCRAP KING</h3>
+        <p>Build a battle-bot from junk parts, then throw it into the arena.</p>
+        <div class="tags"><span class="tag">Builder</span><span class="tag">PvP</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="stats">
+  <div class="section-head">
+    <span class="num pixel">STATUS</span>
+    <h2>The arcade, by the numbers</h2>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="value pixel">4</span><span class="label">Cabinets live</span></div>
+    <div class="stat"><span class="value pixel">128k</span><span class="label">Runs played</span></div>
+    <div class="stat"><span class="value pixel">2.3s</span><span class="label">Avg. load time</span></div>
+    <div class="stat"><span class="value pixel">0</span><span class="label">Paywalls</span></div>
+  </div>
+</section>
+
+<section id="leaderboard">
+  <div class="section-head">
+    <span class="num pixel">HIGH_SCORES</span>
+    <h2>This week's leaderboard</h2>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Rank</th><th>Player</th><th>Game</th><th>Score</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="rank">01</td><td>GHOSTPXL</td><td>Neon Drift</td><td>98,410</td></tr>
+      <tr><td class="rank">02</td><td>KIRA_V</td><td>Grid_Zero</td><td>91,200</td></tr>
+      <tr><td class="rank">03</td><td>toast_bot</td><td>Void Runners</td><td>87,650</td></tr>
+      <tr><td class="rank">04</td><td>sparkmage</td><td>Scrap King</td><td>80,015</td></tr>
+      <tr><td class="rank">05</td><td>0x_Nova</td><td>Neon Drift</td><td>76,340</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer id="join">
+  <h2 class="pixel" style="font-size:16px;">READY PLAYER ONE?</h2>
+  <p>Join the playtest list and get early cabinet drops before anyone else.</p>
+  <button class="insert-coin" onclick="sendPrompt('I want to join the Pixel Forge playtest list, what do I do next?')">JOIN THE LIST</button>
+  <div class="foot-links" style="margin-top:36px;">
+    <a href="#games">Games</a>
+    <a href="#stats">Stats</a>
+    <a href="#leaderboard">Leaderboard</a>
+  </div>
+  <p class="fine-print">PIXEL FORGE — a test site, built for fun. No real coins were inserted.</p>
+</footer>
+
+</body>
+</html>
